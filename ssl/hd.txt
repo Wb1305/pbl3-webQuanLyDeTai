@@ -1,0 +1,59 @@
+Certificate Authority (CA)
+Tạo private key cho root CA:
+openssl genrsa -des3 -out rootCA.key 2048
+​
+Tạo chứng chỉ root CA:
+openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1825 -out rootCA.pem
+​
+Mở trình duyệt và nạp file .PEM vào vùng trusted root CA
+Tạo private key cho domain:
+Ví dụ với domain test-ssl.local
+openssl genrsa -out test-ssl.local.key 2048
+​
+openssl genrsa -out khoahocphp.com.key 2048
+​
+Tạo CSR (Signing Request):
+openssl req -new -key test-ssl.local.key -out test-ssl.local.csr
+​
+openssl req -new -key khoahocphp.com.key -out khoahocphp.com.csr
+​
+openssl req -new -key customer-retail.com.key -out customer-retail.com.csr
+
+Tạo file config định nghĩa Subject Alternative Name
+nano test-ssl.local.ext
+
+-----------------------
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = grostore.com
+​
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = khoahocphp.com
+​
+Tạo cert cho domain:
+openssl x509 -req -in test-ssl.local.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
+-out test-ssl.local.crt -days 1825 -sha256 -extfile test-ssl.local.ext
+​
+openssl x509 -req -in khoahocphp.com.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
+-out khoahocphp.com.crt -days 1825 -sha256 -extfile khoahocphp.com.ext
+​
+openssl x509 -req -in ketcaupro.local.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
+-out ketcaupro.local.crt -days 1825 -sha256 -extfile ketcaupro.local.ext
+​
+openssl x509 -req -in ledungshop.com.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
+-out ledungshop.com.crt -days 1825 -sha256 -extfile ledungshop.com.ext
+
+Thêm cert cho domain:
+SSLEngine on
+SSLCertificateFile [link to cert]
+SSLCertificateKeyFile [link to private]
+SSLCertificateChainFile [link to chain file]
